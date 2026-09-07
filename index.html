@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PantryPal AI – Recipe Preparation Agent</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-inner container">
+      <div class="nav-logo">
+        <span class="logo-icon">🍳</span>
+        <div>
+          <span class="logo-name">PantryPal AI</span>
+          <span class="logo-sub">Recipe Preparation Agent</span>
+        </div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#home">Home</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#recipes">Recipes</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section class="hero" id="home">
+    <div class="container hero-inner">
+      <div class="hero-content">
+        <span class="hero-badge">✦ AI-Powered Cooking</span>
+        <h1 class="hero-heading">Turn Your Ingredients Into <span class="highlight">Delicious Meals</span></h1>
+        <p class="hero-sub">Tell PantryPal AI what ingredients you have, and discover personalized recipes with smart substitutions and cooking tips.</p>
+        <a href="#form-section" class="btn btn-primary" id="startCooking">Start Cooking</a>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-card">
+          <div class="hero-card-icon">🥗</div>
+          <p>Smart Recipe Matching</p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon">🔄</div>
+          <p>Ingredient Substitutions</p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon">⏱️</div>
+          <p>Time-Based Filtering</p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon">🌱</div>
+          <p>Dietary Preferences</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-sub">Three simple steps to your next meal</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Add Ingredients</h3>
+          <p>Enter the ingredients you already have at home into the smart search box.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Set Preferences</h3>
+          <p>Choose your dietary preference, available cooking time, and difficulty level.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Get Recipes</h3>
+          <p>PantryPal AI suggests personalized recipes with tips and substitutions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORM SECTION -->
+  <section class="form-section" id="form-section">
+    <div class="container">
+      <h2 class="section-title">What's in Your Pantry?</h2>
+      <p class="section-sub">Add your available ingredients and customize your preferences</p>
+
+      <div class="form-card">
+        <!-- Ingredient Input -->
+        <div class="form-group">
+          <label class="form-label">🧅 Ingredients You Have</label>
+          <div class="ingredient-input-row">
+            <input type="text" id="ingredientInput" class="text-input" placeholder="Enter an ingredient, e.g. tomato" autocomplete="off" />
+            <button class="btn btn-add" id="addIngredientBtn">+ Add</button>
+          </div>
+          <div class="tags-container" id="tagsContainer">
+            <span class="tags-placeholder" id="tagsPlaceholder">No ingredients added yet. Start adding above.</span>
+          </div>
+        </div>
+
+        <div class="preferences-grid">
+          <!-- Dietary Preference -->
+          <div class="form-group">
+            <label class="form-label">🌿 Dietary Preference</label>
+            <div class="chip-group" id="dietaryGroup">
+              <button class="chip active" data-value="no-preference">No Preference</button>
+              <button class="chip" data-value="vegetarian">Vegetarian</button>
+              <button class="chip" data-value="vegan">Vegan</button>
+              <button class="chip" data-value="non-vegetarian">Non-Vegetarian</button>
+            </div>
+          </div>
+
+          <!-- Cooking Time -->
+          <div class="form-group">
+            <label class="form-label">⏱️ Cooking Time</label>
+            <div class="chip-group" id="timeGroup">
+              <button class="chip active" data-value="any">Any</button>
+              <button class="chip" data-value="15">Under 15 min</button>
+              <button class="chip" data-value="30">Under 30 min</button>
+              <button class="chip" data-value="45">Under 45 min</button>
+            </div>
+          </div>
+
+          <!-- Difficulty -->
+          <div class="form-group">
+            <label class="form-label">🎯 Difficulty</label>
+            <div class="chip-group" id="difficultyGroup">
+              <button class="chip active" data-value="any">Any</button>
+              <button class="chip" data-value="easy">Easy</button>
+              <button class="chip" data-value="medium">Medium</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-find" id="findRecipeBtn">
+          <span>🔍</span> Find My Recipe
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS SECTION -->
+  <section class="results-section" id="recipes">
+    <div class="container" id="resultsContainer" style="display:none;">
+      <h2 class="section-title">Your Personalized Recipes</h2>
+      <p class="section-sub" id="resultsSubtitle"></p>
+      <div class="recipes-grid" id="recipesGrid"></div>
+    </div>
+  </section>
+
+  <!-- RECENT SEARCHES SECTION -->
+  <section class="extras-section" id="recent-searches-section" style="display:none;">
+    <div class="container">
+      <div class="extras-header">
+        <div>
+          <h2 class="section-title extras-title">🕐 Recent Searches</h2>
+          <p class="section-sub extras-sub">Your last ingredient searches — click any to reload it</p>
+        </div>
+        <button class="btn-clear" id="clearSearchesBtn">Clear All</button>
+      </div>
+      <div class="recent-searches-list" id="recentSearchesList"></div>
+    </div>
+  </section>
+
+  <!-- FAVORITES SECTION -->
+  <section class="extras-section" id="favorites-section" style="display:none;">
+    <div class="container">
+      <div class="extras-header">
+        <div>
+          <h2 class="section-title extras-title">❤️ My Favorite Recipes</h2>
+          <p class="section-sub extras-sub">Recipes you've saved for quick access</p>
+        </div>
+        <button class="btn-clear" id="clearFavoritesBtn">Clear All</button>
+      </div>
+      <div class="recipes-grid" id="favoritesGrid"></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>© 2025 PantryPal AI · Recipe Preparation Agent</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -863,6 +863,110 @@
     if (e.key === 'Enter') addIngredient();
   });
 
+  // ── Microphone / Speech-to-Ingredients ──────────
+  (function initMic() {
+    var micBtn  = document.getElementById('micBtn');
+    var micHint = document.getElementById('micHint');
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      micBtn.disabled = true;
+      micBtn.title    = 'Speech recognition is not supported in this browser';
+      micHint.textContent = 'Voice input is not supported in this browser.';
+      return;
+    }
+
+    var recognition = new SpeechRecognition();
+    recognition.lang            = 'en-US';
+    recognition.continuous      = true;   // keep running until we stop it
+    recognition.interimResults  = true;   // capture partials so nothing is lost
+    recognition.maxAlternatives = 1;
+
+    var listening      = false;
+    var userStopped    = false;  // true when the user clicked Stop (vs browser auto-stop)
+    var transcriptBuf  = [];     // accumulate all final results here
+
+    function setListeningUI(on) {
+      listening = on;
+      if (on) {
+        micBtn.classList.add('listening');
+        micBtn.textContent    = '⏹ Stop Listening';
+        micBtn.setAttribute('aria-label', 'Stop voice input');
+        micHint.textContent   = 'Listening… speak your ingredients, then click Stop.';
+        ingredientInput.placeholder = 'Listening…';
+      } else {
+        micBtn.classList.remove('listening');
+        micBtn.textContent    = '🎤 Start Listening';
+        micBtn.setAttribute('aria-label', 'Start voice input');
+        micHint.textContent   = 'Tap the mic and say your ingredients.';
+        ingredientInput.placeholder = 'Enter an ingredient, e.g. tomato';
+      }
+    }
+
+    function processBuffer() {
+      var full = transcriptBuf.join(' ');
+      transcriptBuf = [];
+      if (!full.trim()) return;
+      // Split on comma, "and", "plus", newline
+      var parts = full.split(/,|\band\b|\bplus\b|\n/i);
+      var added = 0;
+      parts.forEach(function (part) {
+        var val = normalise(part);
+        if (!val) return;
+        if (state.ingredients.map(normalise).includes(val)) return;
+        state.ingredients.push(val);
+        added++;
+      });
+      if (added > 0) renderTags();
+    }
+
+    micBtn.addEventListener('click', function () {
+      if (listening) {
+        userStopped = true;
+        recognition.stop();
+      } else {
+        userStopped    = false;
+        transcriptBuf  = [];
+        recognition.start();
+      }
+    });
+
+    recognition.addEventListener('start', function () {
+      setListeningUI(true);
+    });
+
+    // Collect only finalised results into the buffer
+    recognition.addEventListener('result', function (e) {
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          transcriptBuf.push(e.results[i][0].transcript);
+        }
+      }
+    });
+
+    // 'end' fires both on user stop and on browser auto-stop
+    recognition.addEventListener('end', function () {
+      if (userStopped) {
+        // User clicked Stop — process everything collected
+        processBuffer();
+        setListeningUI(false);
+      } else if (listening) {
+        // Browser cut off (e.g. silence timeout) — restart silently
+        recognition.start();
+      }
+    });
+
+    recognition.addEventListener('error', function (e) {
+      if (e.error === 'aborted') return; // we caused this via stop()
+      userStopped = true;
+      setListeningUI(false);
+      transcriptBuf = [];
+      if (e.error === 'not-allowed') {
+        micHint.textContent = 'Microphone access denied. Allow it in browser settings.';
+      }
+    });
+  }());
+
   // ── Chip Groups ──────────────────────────────────
   function initChipGroup(groupId, stateKey) {
     var group = document.getElementById(groupId);

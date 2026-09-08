@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe Library – PantryPal AI</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ── Page-specific styles ── */
+    .rl-hero {
+      background:
+        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+        url('food.png') center/cover no-repeat;
+      padding: 64px 0 56px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .rl-hero-eyebrow {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 14px;
+      border-radius: 100px;
+      margin-bottom: 16px;
+      letter-spacing: 0.06em;
+      border: 1px solid rgba(255,255,255,0.25);
+      font-family: var(--font);
+    }
+    .rl-hero h1 {
+      font-family: var(--font-heading);
+      font-size: 56px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.4);
+    }
+    .rl-hero p {
+      font-size: 16px;
+      color: rgba(255,255,255,0.85);
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── Filter Bar ── */
+    .filter-bar {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+      position: sticky;
+      top: 64px;
+      z-index: 90;
+    }
+    .filter-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    .filter-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1;
+    }
+    .rl-search {
+      flex-shrink: 0;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      width: 200px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .rl-search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45,138,94,0.12);
+    }
+    .rl-count {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+      margin-left: auto;
+    }
+
+    /* ── Main grid section ── */
+    .rl-section {
+      padding: 48px 0 72px;
+      background: var(--surface);
+    }
+    .rl-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    /* ── Recipe card overlay (detail modal) ── */
+    .rl-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      overflow-y: auto;
+      padding: 40px 16px;
+    }
+    .rl-overlay.open { display: block; }
+    .rl-modal {
+      background: var(--bg);
+      border-radius: 16px;
+      max-width: 720px;
+      margin: 0 auto;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    }
+    .rl-modal-header {
+      background: linear-gradient(135deg, #e8f5ef 0%, #fef9e7 100%);
+      padding: 32px 28px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      position: relative;
+    }
+    .rl-modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; cursor: pointer;
+      transition: background 0.12s;
+    }
+    .rl-modal-close:hover { background: #fff5f5; border-color: #f5a0a0; }
+    .rl-modal-emoji { font-size: 48px; line-height: 1; flex-shrink: 0; }
+    .rl-modal-title {
+      font-family: var(--font-heading);
+      font-size: 28px; font-weight: 600;
+      color: var(--text); margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .rl-modal-desc { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+    .rl-modal-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+    .rl-modal-section { }
+    .rl-modal-section-title {
+      font-family: var(--font-heading);
+      font-size: 18px; font-weight: 600;
+      color: var(--text); margin-bottom: 10px;
+    }
+    .rl-modal-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .rl-modal-list li {
+      font-size: 13px; color: var(--muted);
+      padding-left: 16px; position: relative; line-height: 1.6;
+    }
+    .rl-modal-list li::before { content: "•"; position: absolute; left: 4px; color: var(--accent); }
+    .rl-modal-steps { list-style: none; counter-reset: sc; display: flex; flex-direction: column; gap: 8px; }
+    .rl-modal-steps li {
+      font-size: 13px; color: var(--muted);
+      display: flex; gap: 12px; line-height: 1.6;
+      counter-increment: sc;
+    }
+    .rl-modal-steps li::before {
+      content: counter(sc);
+      flex-shrink: 0; width: 22px; height: 22px;
+      border-radius: 50%; background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+    }
+    .rl-modal-tip {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 8px; padding: 12px 14px;
+      font-size: 13px; color: #92400e;
+    }
+    .rl-modal-tip strong { color: #78350f; }
+
+    /* No results */
+    .rl-empty {
+      text-align: center; padding: 64px 24px; color: var(--muted); font-size: 15px;
+      grid-column: 1 / -1;
+    }
+    .rl-empty span { font-size: 48px; display: block; margin-bottom: 12px; }
+
+    @media (max-width: 600px) {
+      .rl-hero h1 { font-size: 36px; }
+      .rl-grid { grid-template-columns: 1fr; }
+      .rl-modal-header { flex-direction: column; gap: 10px; }
+      .rl-modal-emoji { font-size: 36px; }
+      .rl-modal-title { font-size: 22px; }
+      .rl-modal-body { padding: 18px 20px; }
+      .filter-bar { top: 0; }
+      .rl-search { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-inner container">
+      <div class="nav-logo">
+        <span class="logo-icon">🍳</span>
+        <div>
+          <span class="logo-name">PantryPal AI</span>
+          <span class="logo-sub">Recipe Preparation Agent</span>
+        </div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#how-it-works">How It Works</a></li>
+        <li><a href="recipes.html" style="color:var(--accent);background:var(--accent-light);">Recipes</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="rl-hero">
+    <div class="container">
+      <span class="rl-hero-eyebrow">✦ Recipe Library</span>
+      <h1>Every Recipe,<br><em>At a Glance</em></h1>
+      <p>Browse the full collection of 43 hand-crafted recipes — filter by diet, time or difficulty.</p>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-inner container">
+      <span class="filter-label">Filter</span>
+      <div class="filter-chips" id="filterChips">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="vegan">Vegan</button>
+        <button class="chip" data-filter="vegetarian">Vegetarian</button>
+        <button class="chip" data-filter="non-vegetarian">Non-Veg</button>
+        <button class="chip" data-filter="easy">Easy</button>
+        <button class="chip" data-filter="medium">Medium</button>
+        <button class="chip" data-filter="quick">Under 15 min</button>
+      </div>
+      <input class="rl-search" id="rlSearch" type="search" placeholder="Search recipes…" autocomplete="off" />
+      <span class="rl-count" id="rlCount"></span>
+    </div>
+  </div>
+
+  <!-- RECIPE GRID -->
+  <section class="rl-section">
+    <div class="container">
+      <div class="rl-grid" id="rlGrid"></div>
+    </div>
+  </section>
+
+  <!-- DETAIL OVERLAY -->
+  <div class="rl-overlay" id="rlOverlay" role="dialog" aria-modal="true">
+    <div class="rl-modal" id="rlModal">
+      <div class="rl-modal-header" id="rlModalHeader">
+        <button class="rl-modal-close" id="rlModalClose" aria-label="Close">✕</button>
+        <div class="rl-modal-emoji" id="rlModalEmoji"></div>
+        <div>
+          <div class="rl-modal-title" id="rlModalTitle"></div>
+          <div class="rl-modal-desc" id="rlModalDesc"></div>
+          <div class="recipe-meta" id="rlModalMeta"></div>
+        </div>
+      </div>
+      <div class="rl-modal-body" id="rlModalBody"></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>© 2025 PantryPal AI · Recipe Preparation Agent</p>
+  </footer>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ── Recipes (mirror of app.js) ──────────────────
+    const RECIPES = [
+      {id:1,name:'Classic Tomato Pasta',emoji:'🍝',description:'A quick Italian-inspired pasta tossed in a fresh homemade tomato sauce — simple, satisfying and endlessly customisable.',dietary:['no-preference','vegetarian','vegan'],time:15,difficulty:'easy',keywords:['tomato','pasta','garlic','onion','basil','olive oil'],ingredients:['200g pasta','3 tomatoes, chopped','2 garlic cloves','1 tbsp olive oil','Salt & pepper','Fresh basil'],steps:['Boil pasta as per package instructions.','Sauté garlic in olive oil for 1 min.','Add tomatoes, cook 5 mins until soft.','Toss drained pasta with sauce.','Season and garnish with basil.'],substitutions:['No fresh basil? Use dried basil or oregano.','No olive oil? Any neutral cooking oil works.','No fresh tomatoes? Use canned chopped tomatoes.'],tip:'Add a pinch of sugar to balance the acidity of the tomatoes.'},
+      {id:2,name:'Veggie Stir-Fry',emoji:'🥦',description:'A vibrant, high-heat stir-fry packed with crunchy vegetables in a savoury soy-garlic sauce.',dietary:['no-preference','vegetarian','vegan'],time:20,difficulty:'easy',keywords:['broccoli','carrot','onion','bell pepper','garlic','soy sauce','ginger'],ingredients:['1 cup broccoli florets','1 carrot, sliced','1 bell pepper','2 tbsp soy sauce','1 tsp sesame oil','Garlic & ginger'],steps:['Heat oil in a wok over high heat.','Add garlic and ginger, stir 30 secs.','Add hard vegetables first.','Add softer veggies and soy sauce.','Toss 2–3 mins and serve hot.'],substitutions:['No soy sauce? Use coconut aminos.','No broccoli? Use cabbage or cauliflower.'],tip:'Keep the heat high for a proper stir-fry.'},
+      {id:3,name:'Egg Fried Rice',emoji:'🍚',description:'A classic takeaway-style fried rice made at home in under 15 minutes using leftover rice and eggs.',dietary:['no-preference','vegetarian'],time:15,difficulty:'easy',keywords:['rice','egg','onion','garlic','soy sauce','peas','carrot'],ingredients:['2 cups cooked rice','2 eggs','1 small onion','2 garlic cloves','2 tbsp soy sauce','1 cup frozen peas'],steps:['Heat oil; scramble eggs and set aside.','Sauté onion and garlic until golden.','Add rice, stir-fry on high heat.','Mix in soy sauce and peas.','Return eggs, combine and serve.'],substitutions:['No peas? Use corn or diced carrot.','No soy sauce? Use salt and vinegar.'],tip:'Day-old rice works best.'},
+      {id:4,name:'Creamy Mushroom Soup',emoji:'🍲',description:'A rich and velvety mushroom soup that comes together in 30 minutes.',dietary:['no-preference','vegetarian'],time:30,difficulty:'easy',keywords:['mushroom','onion','garlic','cream','butter','broth'],ingredients:['300g mushrooms, sliced','1 onion','3 garlic cloves','200ml cream','2 tbsp butter','500ml vegetable broth'],steps:['Melt butter, sauté onion and garlic.','Add mushrooms, cook until golden.','Pour in broth, simmer 10 mins.','Blend half the soup for texture.','Stir in cream, season and serve.'],substitutions:['No cream? Use coconut milk.','No butter? Use olive oil.'],tip:'Use a mix of mushroom varieties for deeper flavour.'},
+      {id:5,name:'Chicken Stir-Fry',emoji:'🍗',description:'Tender sliced chicken with crisp peppers and onions in a quick soy-ginger glaze.',dietary:['no-preference','non-vegetarian'],time:25,difficulty:'medium',keywords:['chicken','bell pepper','onion','garlic','soy sauce','ginger'],ingredients:['300g chicken breast, sliced','1 bell pepper','1 onion','2 tbsp soy sauce','1 tsp cornstarch','Garlic & ginger'],steps:['Marinate chicken with soy sauce and cornstarch.','Stir-fry chicken until cooked, set aside.','Sauté garlic, ginger, onion and pepper.','Return chicken to pan, toss together.','Serve over rice.'],substitutions:['No cornstarch? Skip it.','No bell pepper? Use zucchini.'],tip:'Slice chicken against the grain.'},
+      {id:6,name:'Avocado Toast',emoji:'🥑',description:'Creamy mashed avocado on golden toast — a nutritious breakfast in under 10 minutes.',dietary:['no-preference','vegetarian','vegan'],time:10,difficulty:'easy',keywords:['avocado','bread','lemon','tomato','chilli'],ingredients:['2 slices sourdough bread','1 ripe avocado','½ lemon','Chilli flakes','Salt & pepper','Cherry tomatoes'],steps:['Toast the bread until golden.','Mash avocado with lemon juice.','Spread avocado over toast.','Top with tomatoes and chilli flakes.','Serve immediately.'],substitutions:['No sourdough? Use any bread.','No lemon? Use lime.'],tip:'A drizzle of olive oil elevates this dish.'},
+      {id:7,name:'Lentil Dal',emoji:'🫘',description:'A warming, protein-rich Indian dal made with red lentils and aromatic spices.',dietary:['no-preference','vegetarian','vegan'],time:35,difficulty:'medium',keywords:['lentil','dal','tomato','onion','garlic','ginger','cumin','turmeric'],ingredients:['1 cup red lentils','2 tomatoes, chopped','1 onion','Garlic & ginger','1 tsp cumin','½ tsp turmeric'],steps:['Rinse lentils and boil until soft.','Sauté onion, garlic, and ginger.','Add tomatoes and spices, cook 5 mins.','Combine with lentils, simmer 10 mins.','Serve with rice or naan.'],substitutions:['No red lentils? Use yellow moong dal.','No fresh ginger? Use ½ tsp ground ginger.'],tip:'Finish with a tadka for extra flavour.'},
+      {id:8,name:'Tuna Salad Bowl',emoji:'🥗',description:'A light, protein-packed salad with canned tuna and fresh vegetables.',dietary:['no-preference','non-vegetarian'],time:10,difficulty:'easy',keywords:['tuna','cucumber','tomato','onion','lemon','lettuce'],ingredients:['1 can tuna, drained','½ cucumber, diced','2 tomatoes, chopped','½ red onion, sliced','Juice of 1 lemon','Mixed lettuce leaves'],steps:['Combine all vegetables in a bowl.','Flake tuna over the top.','Dress with lemon juice and olive oil.','Season with salt and pepper.','Toss gently and serve.'],substitutions:['No tuna? Use canned chickpeas.','No lettuce? Use spinach.'],tip:'Rinse canned tuna to reduce sodium.'},
+      {id:9,name:'Banana Pancakes',emoji:'🥞',description:'Fluffy, naturally sweet pancakes made with ripe bananas.',dietary:['no-preference','vegetarian'],time:15,difficulty:'easy',keywords:['banana','egg','flour','milk','butter'],ingredients:['2 ripe bananas','2 eggs','½ cup flour','¼ cup milk','1 tsp baking powder','Butter for cooking'],steps:['Mash bananas in a bowl.','Whisk in eggs and milk.','Fold in flour and baking powder.','Cook small portions in buttered pan.','Flip when bubbles form; cook until golden.'],substitutions:['No flour? Use oat flour.','No milk? Use plant-based milk.'],tip:'The riper the banana, the sweeter the pancakes.'},
+      {id:10,name:'Garlic Butter Shrimp',emoji:'🍤',description:'Juicy prawns sautéed in a fragrant garlic butter sauce.',dietary:['no-preference','non-vegetarian'],time:15,difficulty:'easy',keywords:['shrimp','prawn','garlic','butter','lemon','parsley'],ingredients:['300g shrimp, peeled','4 garlic cloves, minced','3 tbsp butter','Juice of 1 lemon','Fresh parsley','Salt & pepper'],steps:['Melt butter over medium-high heat.','Add garlic, sauté 1 min.','Add shrimp, cook 2 mins per side.','Squeeze lemon juice over shrimp.','Garnish with parsley and serve.'],substitutions:["No butter? Use olive oil.","No parsley? Use coriander."],tip:"Don't overcrowd the pan."},
+      {id:11,name:'Chickpea Curry',emoji:'🍛',description:'A hearty Indian-style chickpea curry with coconut milk — rich, satisfying, and fully plant-based.',dietary:['no-preference','vegetarian','vegan'],time:30,difficulty:'medium',keywords:['chickpea','tomato','onion','garlic','ginger','cumin','coconut milk','curry'],ingredients:['1 can chickpeas','1 can coconut milk','2 tomatoes','1 onion','Garlic & ginger','1 tsp cumin','1 tsp garam masala'],steps:['Sauté onion, garlic and ginger.','Add tomatoes and spices, cook 5 mins.','Pour in chickpeas and coconut milk.','Simmer 15 mins until thick.','Serve with rice or flatbread.'],substitutions:['No coconut milk? Use cream or yoghurt.','No canned chickpeas? Use boiled dried chickpeas.'],tip:'Add spinach in the last 2 minutes.'},
+      {id:12,name:'Greek Salad',emoji:'🥗',description:'A refreshing Mediterranean salad with crisp vegetables, salty feta, and briny olives.',dietary:['no-preference','vegetarian'],time:10,difficulty:'easy',keywords:['cucumber','tomato','onion','feta','cheese','olive','lemon'],ingredients:['1 cucumber, diced','3 tomatoes, chopped','½ red onion','100g feta cheese','Kalamata olives','Olive oil & oregano'],steps:['Chop all vegetables into chunks.','Combine in a large bowl.','Add olives and crumbled feta.','Drizzle with olive oil.','Season with oregano, salt and serve.'],substitutions:['No feta? Use paneer.','No olives? Use capers.'],tip:'Let the salad rest 5 minutes.'},
+      {id:13,name:'Vegetable Fried Rice',emoji:'🍛',description:'An Indo-Chinese style fried rice loaded with colourful vegetables.',dietary:['no-preference','vegetarian','vegan'],time:20,difficulty:'easy',keywords:['rice','carrot','peas','capsicum','onion','garlic','soy sauce'],ingredients:['2 cups cooked rice','1 carrot, diced','½ cup peas','1 capsicum, diced','1 onion, chopped','2 tbsp soy sauce','1 tsp oil'],steps:['Heat oil in a wok on high flame.','Sauté onion, garlic 2 mins.','Add carrot, peas and capsicum; stir-fry 3 mins.','Add rice and soy sauce; toss well.','Season, serve hot.'],substitutions:['No soy sauce? Use salt and pepper.','No capsicum? Use spring onions.'],tip:'Use cold day-old rice.'},
+      {id:14,name:'Tomato Rice',emoji:'🍅',description:'A South Indian-style tangy tomato rice spiced with mustard seeds and curry leaves.',dietary:['no-preference','vegetarian','vegan'],time:20,difficulty:'easy',keywords:['rice','tomato','onion','garlic','mustard','cumin','turmeric','curry leaves'],ingredients:['1½ cups cooked rice','2 tomatoes, chopped','1 onion, sliced','1 tsp mustard seeds','½ tsp turmeric','1 tsp oil','Salt to taste'],steps:['Heat oil; add mustard seeds, let them splutter.','Add curry leaves, onion; sauté until golden.','Add tomatoes and turmeric; cook until mushy.','Fold in cooked rice, mix well.','Season with salt and serve.'],substitutions:['No mustard seeds? Use cumin seeds.','No curry leaves? Use a bay leaf.'],tip:'A squeeze of lemon brightens the flavour.'},
+      {id:15,name:'Vegetable Sandwich',emoji:'🥪',description:'A quick, filling sandwich stuffed with seasoned vegetables.',dietary:['no-preference','vegetarian'],time:10,difficulty:'easy',keywords:['bread','tomato','onion','cucumber','potato','cheese','butter'],ingredients:['4 slices bread','1 potato, boiled & sliced','1 tomato, sliced','½ cucumber, sliced','1 onion, sliced','Butter','Salt, pepper & chaat masala'],steps:['Butter both sides of each bread slice.','Layer potato, tomato, cucumber and onion.','Sprinkle chaat masala, salt and pepper.','Close and toast on a pan until golden.','Serve with green chutney or ketchup.'],substitutions:['No potato? Use mashed avocado.','No chaat masala? Use cumin powder and salt.'],tip:'Press the sandwich down for an even golden crust.'},
+      {id:16,name:'Masala Pasta',emoji:'🍝',description:'An Indian-spiced pasta dish that blends Italian and Indian flavours.',dietary:['no-preference','vegetarian'],time:25,difficulty:'easy',keywords:['pasta','tomato','onion','garlic','capsicum','cumin','garam masala'],ingredients:['200g pasta','2 tomatoes, chopped','1 onion, chopped','1 capsicum, diced','2 garlic cloves','½ tsp cumin','½ tsp garam masala','Salt & oil'],steps:['Boil pasta until al dente; drain and set aside.','Heat oil; sauté garlic and onion until soft.','Add capsicum and tomatoes; cook 5 mins.','Add spices; stir well for 1 min.','Toss in pasta, mix and serve hot.'],substitutions:['No garam masala? Use curry powder.','No capsicum? Use peas or corn.'],tip:'Add a spoon of butter at the end.'},
+      {id:17,name:'Poha',emoji:'🍽️',description:'A classic Indian breakfast made with flattened rice, peas, and spices.',dietary:['no-preference','vegetarian','vegan'],time:15,difficulty:'easy',keywords:['poha','flattened rice','peas','onion','potato','mustard','turmeric','curry leaves'],ingredients:['2 cups poha (flattened rice)','1 onion, chopped','½ cup peas','1 potato, boiled & diced','1 tsp mustard seeds','½ tsp turmeric','Oil & salt','Lemon juice'],steps:['Rinse poha gently; let drain 5 mins.','Heat oil; splutter mustard seeds.','Sauté onion until translucent.','Add potato, peas, turmeric and salt.','Add poha, toss gently, squeeze lemon and serve.'],substitutions:['No poha? Use puffed rice.','No curry leaves? Skip or use asafoetida.'],tip:"Don't over-rinse poha."},
+      {id:18,name:'Upma',emoji:'🫕',description:'A hearty South Indian semolina breakfast porridge tempered with aromatic spices.',dietary:['no-preference','vegetarian','vegan'],time:20,difficulty:'easy',keywords:['semolina','rava','onion','tomato','peas','carrot','mustard','curry leaves','ginger'],ingredients:['1 cup semolina (rava)','1 onion, chopped','1 tomato, chopped','½ cup mixed vegetables','1 tsp mustard seeds','1 tsp oil','2 cups water','Salt to taste'],steps:['Dry-roast semolina until light golden; set aside.','Heat oil; add mustard seeds, let them splutter.','Sauté onion, ginger and tomato until soft.','Add vegetables and water; bring to a boil.','Slowly stir in semolina; cover and cook 3 mins.'],substitutions:['No semolina? Use broken wheat.','No fresh vegetables? Use frozen.'],tip:'Roasting semolina prevents lumps.'},
+      {id:19,name:'Vegetable Pulao',emoji:'🍚',description:'A fragrant, lightly spiced one-pot rice dish loaded with mixed vegetables.',dietary:['no-preference','vegetarian','vegan'],time:30,difficulty:'medium',keywords:['rice','vegetables','peas','carrot','potato','onion','garlic','ginger','cumin'],ingredients:['1½ cups basmati rice','1 cup mixed vegetables','1 onion, sliced','Garlic & ginger paste','1 tsp cumin','2 bay leaves','1 tbsp oil','Salt to taste'],steps:['Wash and soak rice 20 mins; drain.','Heat oil; fry cumin and bay leaves 30 secs.','Sauté onion and garlic-ginger paste until golden.','Add vegetables and sauté 3 mins.','Add rice, 3 cups water and salt; cook on low until done.'],substitutions:['No basmati? Any long-grain rice works.','No fresh vegetables? Use frozen peas and canned corn.'],tip:'Fluff rice gently with a fork after cooking.'},
+      {id:20,name:'Aloo Sabzi',emoji:'🥔',description:'A simple, comforting dry Indian potato curry seasoned with cumin and spices.',dietary:['no-preference','vegetarian','vegan'],time:20,difficulty:'easy',keywords:['potato','aloo','onion','tomato','garlic','cumin','turmeric','coriander'],ingredients:['4 medium potatoes, boiled & cubed','1 onion, chopped','1 tomato, chopped','1 tsp cumin seeds','½ tsp turmeric','1 tsp coriander powder','Oil & salt','Fresh coriander to garnish'],steps:['Heat oil; splutter cumin seeds.','Sauté onion until golden, then add tomato.','Add turmeric and coriander powder; cook 2 mins.','Add potatoes, mix well and cook 5 mins.','Garnish with fresh coriander and serve.'],substitutions:['No coriander powder? Use garam masala.','No fresh coriander? Use parsley.'],tip:'Slightly crush a few potato pieces to absorb the masala.'},
+      {id:21,name:'Dal Rice',emoji:'🍱',description:'The ultimate Indian comfort food — simple yellow dal served over steamed rice.',dietary:['no-preference','vegetarian','vegan'],time:35,difficulty:'easy',keywords:['dal','lentil','rice','onion','tomato','garlic','turmeric','cumin'],ingredients:['1 cup yellow moong dal','1½ cups rice','1 onion, chopped','1 tomato, chopped','1 tsp cumin','½ tsp turmeric','Garlic cloves','Oil & salt'],steps:['Cook rice until fluffy; set aside.','Boil dal with turmeric and salt until soft.','Heat oil; fry cumin and garlic until golden.','Add onion and tomato; sauté 5 mins.','Pour tempering over dal, stir and serve with rice.'],substitutions:['No moong dal? Use masoor dal.','No garlic? Use asafoetida.'],tip:'A dollop of ghee on hot dal rice is divine.'},
+      {id:22,name:'Besan Chilla',emoji:'🫓',description:'Savoury Indian chickpea flour pancakes — thin, crispy and protein-rich.',dietary:['no-preference','vegetarian','vegan'],time:15,difficulty:'easy',keywords:['besan','chickpea flour','onion','tomato','capsicum','ginger','cumin'],ingredients:['1 cup besan (chickpea flour)','1 onion, finely chopped','1 tomato, finely chopped','½ capsicum, chopped','½ tsp cumin','¼ tsp turmeric','Water to make batter','Oil for cooking'],steps:['Mix besan, vegetables and spices.','Add water gradually to make smooth batter.','Heat a non-stick pan; grease lightly.','Pour a ladleful; spread in a circle.','Cook until golden; flip and cook other side.'],substitutions:['No besan? Use whole wheat flour.','No capsicum? Use grated carrot.'],tip:'The batter should be thin — like crepe batter.'},
+      {id:23,name:'Omelette',emoji:'🍳',description:'A classic fluffy omelette — endlessly versatile and ready in 5 minutes.',dietary:['no-preference','vegetarian'],time:10,difficulty:'easy',keywords:['egg','onion','tomato','capsicum','cheese','butter','milk'],ingredients:['3 eggs','2 tbsp milk','½ onion, chopped','½ tomato, chopped','Salt & pepper','1 tsp butter or oil'],steps:['Beat eggs with milk, salt and pepper.','Heat butter in a pan over medium heat.','Add onion and tomato; stir 1 min.','Pour beaten eggs over vegetables.','Cook until set; fold and serve.'],substitutions:['No milk? Skip it.','No butter? Use any oil.'],tip:"Don't over-stir for a soft, custardy texture."},
+      {id:24,name:'Scrambled Eggs',emoji:'🍳',description:'Soft, creamy scrambled eggs — a protein-rich breakfast ready in under 10 minutes.',dietary:['no-preference','vegetarian'],time:10,difficulty:'easy',keywords:['egg','butter','milk','cheese','onion','tomato'],ingredients:['3 eggs','1 tbsp butter','2 tbsp milk','Salt & pepper','Fresh herbs (optional)'],steps:['Crack eggs into a bowl with milk; whisk well.','Melt butter in a pan on low-medium heat.','Pour in eggs; stir gently with a spatula.','Cook slowly, pulling eggs from the edges.','Remove from heat while slightly soft; serve.'],substitutions:['No milk? Skip for a richer result.','No butter? Use olive oil.'],tip:'Low and slow is the secret.'},
+      {id:25,name:'Instant Noodles',emoji:'🍜',description:'Elevated instant noodles with fresh vegetables and egg.',dietary:['no-preference','vegetarian'],time:10,difficulty:'easy',keywords:['noodles','egg','onion','carrot','capsicum','garlic','soy sauce'],ingredients:['1 pack instant noodles','1 egg','½ onion, sliced','1 small carrot, julienned','½ capsicum, sliced','1 tsp soy sauce','1 tsp oil'],steps:['Boil noodles as per packet; drain.','Heat oil; sauté onion, carrot and capsicum 2 mins.','Push veggies aside; scramble egg in the pan.','Add noodles and soy sauce; toss together.','Add seasoning to taste; serve hot.'],substitutions:['No egg? Skip or add tofu.','No fresh vegetables? Use frozen.'],tip:'Use only half the seasoning packet.'},
+      {id:26,name:'Cheese Sandwich',emoji:'🧀',description:'A warm, melty cheese sandwich toasted to golden perfection.',dietary:['no-preference','vegetarian'],time:10,difficulty:'easy',keywords:['bread','cheese','butter','tomato','onion'],ingredients:['2 slices bread','2–3 slices cheese','1 tbsp butter','½ tomato, sliced (optional)','Salt & pepper'],steps:['Butter one side of each bread slice.','Place cheese (and tomato) on the unbuttered side.','Close with buttered sides out.','Toast on a pan over medium heat until golden.','Flip carefully, toast other side and serve.'],substitutions:['No cheese slices? Grate any hard cheese.','No butter? Use olive oil.'],tip:'Cover the pan with a lid to melt the cheese faster.'},
+      {id:27,name:'Vegetable Wrap',emoji:'🌯',description:'A fresh and filling wrap stuffed with sautéed vegetables and a creamy spread.',dietary:['no-preference','vegetarian','vegan'],time:15,difficulty:'easy',keywords:['bread','flour','capsicum','onion','carrot','tomato','cheese','vegetables'],ingredients:['2 large tortillas or flatbreads','1 capsicum, sliced','1 carrot, grated','½ onion, sliced','1 tomato, sliced','2 tbsp hummus or cream cheese','Salt, pepper & mixed herbs'],steps:['Warm the tortilla in a dry pan for 30 secs.','Spread hummus or cream cheese on the wrap.','Sauté capsicum and onion in oil for 3 mins.','Layer vegetables and tomato on the wrap.','Season, roll tightly and serve.'],substitutions:['No tortilla? Use any flatbread.','No hummus? Use mayo or guacamole.'],tip:'Warm the wrap first so it folds without cracking.'},
+      {id:28,name:'Oats Bowl',emoji:'🥣',description:'A warm, creamy oats bowl loaded with fruit and nuts.',dietary:['no-preference','vegetarian'],time:10,difficulty:'easy',keywords:['oats','milk','banana','fruit','honey','nuts'],ingredients:['1 cup rolled oats','1½ cups milk or water','1 banana, sliced','1 tbsp honey','Handful of nuts','Pinch of cinnamon'],steps:['Bring milk to a gentle simmer.','Stir in oats; cook 5 mins, stirring often.','Add cinnamon and honey; mix well.','Pour into a bowl and top with banana and nuts.','Serve immediately.'],substitutions:['No milk? Use water or plant-based milk.','No honey? Use maple syrup or jaggery.'],tip:'Soak oats overnight to reduce morning cook time.'},
+      {id:29,name:'Vegetable Salad',emoji:'🥗',description:'A crunchy, colourful mixed vegetable salad with a light lemon dressing.',dietary:['no-preference','vegetarian','vegan'],time:10,difficulty:'easy',keywords:['cucumber','tomato','carrot','onion','capsicum','lemon','vegetables'],ingredients:['1 cucumber, diced','2 tomatoes, chopped','1 carrot, grated','½ capsicum, diced','½ onion, sliced','Juice of 1 lemon','Salt, pepper & herbs'],steps:['Dice and combine all vegetables.','Drizzle with lemon juice.','Add salt, pepper, and herbs.','Toss well to combine.','Serve fresh or chill for 10 mins.'],substitutions:['No lemon? Use apple cider vinegar.','No capsicum? Use radish.'],tip:'Chill for 10 minutes for best flavour.'},
+      {id:30,name:'Fruit Bowl',emoji:'🍓',description:'A vibrant, refreshing bowl of mixed seasonal fruits.',dietary:['no-preference','vegetarian','vegan'],time:5,difficulty:'easy',keywords:['banana','apple','fruit','mango','grapes','lemon','honey'],ingredients:['1 banana, sliced','1 apple, diced','½ cup grapes','½ cup any seasonal fruit','Juice of ½ lemon','1 tsp honey (optional)'],steps:['Wash and chop all fruits.','Combine in a bowl.','Squeeze lemon juice over the top.','Drizzle honey if desired.','Toss gently and serve.'],substitutions:['Use any seasonal fruits you have.','No honey? The fruit is naturally sweet.'],tip:'Lemon juice keeps the fruit fresh.'},
+      {id:31,name:'Sprouts Salad',emoji:'🌱',description:'A light, protein-rich Indian sprouts salad with lemon and spices.',dietary:['no-preference','vegetarian','vegan'],time:10,difficulty:'easy',keywords:['sprouts','tomato','onion','cucumber','lemon','carrot','vegetables'],ingredients:['1½ cups mixed sprouts','1 tomato, chopped','½ onion, finely chopped','½ cucumber, diced','1 carrot, grated','Juice of 1 lemon','Salt, cumin powder & fresh coriander'],steps:['Rinse sprouts well.','Combine with all chopped vegetables.','Add lemon juice, salt and cumin powder.','Toss and top with coriander.','Serve immediately or chill 5 mins.'],substitutions:['No sprouts? Use boiled chickpeas.','No coriander? Use mint.'],tip:'Steam sprouts 2–3 mins for softer texture.'},
+      {id:32,name:'Paneer Bhurji',emoji:'🧀',description:'Crumbled cottage cheese scrambled with onions, tomatoes and spices.',dietary:['no-preference','vegetarian'],time:15,difficulty:'easy',keywords:['paneer','cottage cheese','onion','tomato','capsicum','garlic','ginger','cumin','turmeric'],ingredients:['250g paneer, crumbled','1 onion, finely chopped','2 tomatoes, chopped','½ capsicum, diced','2 garlic cloves, minced','½ tsp turmeric','1 tsp cumin','Oil & salt','Fresh coriander'],steps:['Heat oil; sauté garlic and onion until golden.','Add capsicum; cook 2 mins.','Add tomatoes, turmeric, cumin and salt; cook until soft.','Crumble in paneer; cook 3–4 mins.','Garnish with coriander; serve with roti.'],substitutions:['No paneer? Use firm tofu.','No capsicum? Use peas.'],tip:"Don't over-cook the paneer."},
+      {id:33,name:'Rajma Chawal',emoji:'🫘',description:'Hearty North Indian kidney bean curry served over steamed rice.',dietary:['no-preference','vegetarian','vegan'],time:40,difficulty:'medium',keywords:['rajma','kidney beans','rice','onion','tomato','garlic','ginger','cumin','garam masala'],ingredients:['1 can kidney beans (rajma)','1½ cups rice','1 onion, chopped','2 tomatoes, chopped','Garlic & ginger paste','1 tsp cumin','1 tsp garam masala','½ tsp turmeric','Oil & salt'],steps:['Cook rice; set aside.','Heat oil; sauté cumin, onion and garlic-ginger paste until golden.','Add tomatoes, turmeric and garam masala; cook 8 mins.','Add kidney beans; simmer 12 mins.','Mash a few beans to thicken; serve over rice.'],substitutions:['No canned beans? Use boiled dried kidney beans.','No garam masala? Use chole masala.'],tip:'Rajma tastes better the next day.'},
+      {id:34,name:'Palak Paneer',emoji:'🥬',description:'Tender paneer cubes in a silky, spiced spinach gravy.',dietary:['no-preference','vegetarian'],time:30,difficulty:'medium',keywords:['spinach','palak','paneer','onion','tomato','garlic','ginger','cream','cumin'],ingredients:['200g paneer, cubed','3 cups fresh spinach','1 onion, chopped','1 tomato, chopped','Garlic & ginger','½ tsp cumin','2 tbsp cream','Oil & salt'],steps:['Blanch spinach 2 mins; drain and blend smooth.','Sauté garlic, ginger and onion until golden.','Add tomato and cumin; cook until soft.','Stir in spinach puree; simmer 5 mins.','Add paneer cubes and cream; cook 3 mins.'],substitutions:['No fresh spinach? Use frozen.','No cream? Use cashew paste.'],tip:'Add a tiny pinch of sugar to balance spinach bitterness.'},
+      {id:35,name:'Mixed Vegetable Curry',emoji:'🥘',description:'A versatile, colourful curry made with whatever vegetables you have.',dietary:['no-preference','vegetarian','vegan'],time:25,difficulty:'easy',keywords:['potato','carrot','peas','onion','tomato','garlic','ginger','cumin','turmeric','curry'],ingredients:['2 potatoes, diced','1 carrot, sliced','½ cup peas','1 onion, chopped','1 tomato, chopped','Garlic & ginger','1 tsp cumin','½ tsp turmeric','1 tsp coriander powder','Oil & salt'],steps:['Heat oil; sauté cumin, garlic and onion until golden.','Add tomato, turmeric and coriander; cook 4 mins.','Add potato and carrot with ½ cup water; cover 10 mins.','Add peas; cook 5 more mins.','Adjust seasoning and serve.'],substitutions:['Use any vegetables you have.','No coriander powder? Use garam masala.'],tip:'Cut vegetables to similar size for even cooking.'},
+      {id:36,name:'Masala Omelette',emoji:'🍳',description:'A spiced Indian-style omelette loaded with onion, tomato and green chilli.',dietary:['no-preference','vegetarian'],time:10,difficulty:'easy',keywords:['egg','onion','tomato','capsicum','chilli','coriander','cumin','butter','milk'],ingredients:['3 eggs','1 small onion, finely chopped','1 tomato, chopped','1 green chilli, chopped','¼ tsp cumin','Fresh coriander','Salt & oil'],steps:['Beat eggs well with salt and cumin.','Heat oil; sauté onion, tomato and chilli 2 mins.','Pour beaten eggs over the vegetables.','Sprinkle coriander on top; cook until set.','Fold and serve with bread or chutney.'],substitutions:['No green chilli? Use chilli flakes.','No coriander? Use spring onion tops.'],tip:'Cover the pan for the last minute for a perfectly set top.'},
+      {id:37,name:'Aloo Paratha',emoji:'🫓',description:'Golden, crispy whole-wheat flatbread stuffed with spiced mashed potato.',dietary:['no-preference','vegetarian'],time:30,difficulty:'medium',keywords:['potato','flour','onion','garlic','cumin','coriander','butter','oil'],ingredients:['2 cups whole wheat flour','3 potatoes, boiled & mashed','1 small onion, grated','½ tsp cumin seeds','½ tsp coriander powder','Fresh coriander','Salt & water','Butter for cooking'],steps:['Mix flour, salt and water into soft dough; rest 15 mins.','Combine mashed potato, onion, cumin, coriander for filling.','Roll dough into circles; place filling in centre.','Seal edges, roll gently into flat circles.','Cook with butter until golden on both sides.'],substitutions:['No whole wheat flour? Use plain flour.','No butter? Use ghee or oil.'],tip:'Seal edges well before rolling.'},
+      {id:38,name:'Egg Curry',emoji:'🥚',description:'Hard-boiled eggs simmered in a rich, spiced onion-tomato gravy.',dietary:['no-preference','non-vegetarian'],time:25,difficulty:'easy',keywords:['egg','onion','tomato','garlic','ginger','cumin','turmeric','garam masala'],ingredients:['4 eggs, hard-boiled & peeled','1 onion, chopped','2 tomatoes, chopped','Garlic & ginger paste','1 tsp cumin','½ tsp turmeric','1 tsp garam masala','Oil & salt'],steps:['Heat oil; sauté cumin, onion and garlic-ginger paste until brown.','Add tomatoes, turmeric and garam masala; cook until oil separates.','Add ½ cup water; simmer 5 mins.','Score the boiled eggs and add to the gravy.','Simmer 5 more mins; serve with rice or roti.'],substitutions:['No fresh tomatoes? Use 2 tbsp tomato paste.','No garam masala? Use curry powder.'],tip:'Scoring the eggs lets the gravy seep in.'},
+      {id:39,name:'Chicken Curry',emoji:'🍛',description:'A classic, aromatic Indian chicken curry with a rich tomato-onion gravy.',dietary:['no-preference','non-vegetarian'],time:40,difficulty:'medium',keywords:['chicken','onion','tomato','garlic','ginger','cumin','turmeric','garam masala','coriander'],ingredients:['500g chicken, cut into pieces','1 onion, finely chopped','2 tomatoes, chopped','Garlic & ginger paste','1 tsp cumin','½ tsp turmeric','1 tsp garam masala','1 tsp coriander powder','Oil & salt'],steps:['Heat oil; fry onion until deep golden.','Add garlic-ginger paste; fry 2 mins.','Add tomatoes and all spices; cook until oil separates.','Add chicken pieces; sear on high heat 3 mins.','Add ½ cup water; cover and cook 20 mins.'],substitutions:["No fresh garlic? Use ½ tsp garlic powder.","No coriander powder? Use extra garam masala."],tip:'Fry the onion until truly golden-brown.'},
+      {id:40,name:'Keema Matar',emoji:'🥩',description:'Spiced minced meat cooked with green peas in a dry, flavourful masala.',dietary:['no-preference','non-vegetarian'],time:30,difficulty:'medium',keywords:['minced meat','keema','peas','onion','tomato','garlic','ginger','cumin','garam masala'],ingredients:['400g minced chicken or mutton','1 cup peas','1 onion, chopped','2 tomatoes, chopped','Garlic & ginger paste','1 tsp cumin','1 tsp garam masala','½ tsp turmeric','Oil & salt'],steps:['Heat oil; sauté cumin, onion and garlic-ginger paste until golden.','Add tomatoes and spices; cook 5 mins.','Add minced meat; cook on high heat breaking lumps.','Cook until dry and browned — about 10 mins.','Add peas and splash of water; cover 8 mins.'],substitutions:['No minced meat? Use crumbled paneer.','No peas? Use diced carrot.'],tip:'Cook keema until completely dry before adding peas.'},
+      {id:41,name:'Fish Fry',emoji:'🐟',description:'Crispy spiced pan-fried fish — a quick, flavour-packed dish in under 20 minutes.',dietary:['no-preference','non-vegetarian'],time:20,difficulty:'easy',keywords:['fish','garlic','lemon','cumin','turmeric','chilli','flour','oil'],ingredients:['4 fish fillets','1 tsp turmeric','1 tsp cumin powder','1 tsp chilli powder','1 tbsp lemon juice','2 tbsp flour','Garlic paste','Oil for frying','Salt'],steps:['Mix turmeric, cumin, chilli, garlic, lemon and salt into a paste.','Coat fish fillets evenly; marinate 10 mins.','Dust lightly with flour for a crispy crust.','Heat oil; fry fish 3–4 mins per side until golden.','Drain on paper; serve with lemon and chutney.'],substitutions:['No fish fillets? Use prawns.','No flour? Use semolina for a crunchier coating.'],tip:'Pat the fish dry before marinating.'},
+      {id:42,name:'Chicken Fried Rice',emoji:'🍗',description:'Restaurant-style chicken fried rice loaded with vegetables and egg.',dietary:['no-preference','non-vegetarian'],time:20,difficulty:'easy',keywords:['rice','chicken','egg','carrot','peas','onion','garlic','soy sauce','capsicum'],ingredients:['2 cups cooked rice','150g chicken breast, diced small','1 egg','1 carrot, diced','½ cup peas','1 onion, chopped','2 tbsp soy sauce','Garlic','Oil & pepper'],steps:['Heat oil on high; stir-fry chicken until cooked — 5 mins; set aside.','Sauté garlic and onion 1 min.','Add carrot and peas; stir-fry 3 mins.','Push aside; scramble egg in the pan.','Add rice, soy sauce and chicken; toss and serve.'],substitutions:['No chicken? Skip for veggie fried rice.','No soy sauce? Use salt and vinegar.'],tip:'Use day-old refrigerated rice.'},
+      {id:43,name:'Mutton/Chicken Soup',emoji:'🍜',description:'A warming, nourishing clear broth with tender meat and vegetables.',dietary:['no-preference','non-vegetarian'],time:40,difficulty:'medium',keywords:['chicken','mutton','carrot','onion','garlic','ginger','peas','potato','broth'],ingredients:['300g chicken or mutton pieces','1 carrot, sliced','1 potato, diced','1 onion, quartered','4 garlic cloves','1 inch ginger','½ tsp turmeric','½ tsp pepper','Salt & fresh coriander'],steps:['Add meat, onion, garlic, ginger, turmeric and 4 cups water to a pot.','Bring to a boil; skim any foam.','Add carrot and potato; simmer 25 mins.','Season with salt and pepper.','Garnish with coriander and serve hot.'],substitutions:['No fresh ginger? Use ½ tsp ground ginger.','No potato? Use sweet potato.'],tip:'Simmer gently — it keeps the broth clear.'},
+    ];
+
+    // ── State ──────────────────────────────────────
+    let activeFilter = 'all';
+    let searchQuery  = '';
+
+    // ── DOM refs ──────────────────────────────────
+    const grid       = document.getElementById('rlGrid');
+    const countEl    = document.getElementById('rlCount');
+    const overlay    = document.getElementById('rlOverlay');
+    const chips      = document.querySelectorAll('#filterChips .chip');
+    const searchInput = document.getElementById('rlSearch');
+
+    // ── Helpers ───────────────────────────────────
+    function dietLabel(recipe) {
+      if (recipe.dietary.includes('vegan'))          return { label: 'Vegan', cls: 'meta-tag--vegan' };
+      if (recipe.dietary.includes('non-vegetarian')) return { label: 'Non-Veg', cls: 'meta-tag--nonveg' };
+      if (recipe.dietary.includes('vegetarian'))     return { label: 'Vegetarian', cls: 'meta-tag--veg' };
+      return { label: 'Any', cls: '' };
+    }
+
+    function esc(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Filter logic ──────────────────────────────
+    function filtered() {
+      const q = searchQuery.toLowerCase();
+      return RECIPES.filter(r => {
+        // diet / difficulty / quick filter
+        if (activeFilter === 'vegan'           && !r.dietary.includes('vegan'))          return false;
+        if (activeFilter === 'vegetarian'      && !r.dietary.includes('vegetarian'))     return false;
+        if (activeFilter === 'non-vegetarian'  && !r.dietary.includes('non-vegetarian')) return false;
+        if (activeFilter === 'easy'            && r.difficulty !== 'easy')               return false;
+        if (activeFilter === 'medium'          && r.difficulty !== 'medium')             return false;
+        if (activeFilter === 'quick'           && r.time > 15)                           return false;
+        // search
+        if (q) {
+          const hay = (r.name + ' ' + r.keywords.join(' ') + ' ' + r.description).toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    // ── Render grid ───────────────────────────────
+    function render() {
+      const list = filtered();
+      countEl.textContent = list.length + ' recipe' + (list.length !== 1 ? 's' : '');
+      if (!list.length) {
+        grid.innerHTML = '<div class="rl-empty"><span>🔍</span>No recipes match your filters.</div>';
+        return;
+      }
+      grid.innerHTML = list.map(r => {
+        const d = dietLabel(r);
+        const diffColour = r.difficulty === 'easy' ? '#166534' : '#92400e';
+        const diffBg     = r.difficulty === 'easy' ? '#f0faf4'  : '#fffbeb';
+        return `
+          <article class="recipe-card" data-id="${r.id}">
+            <div class="recipe-card-header" style="cursor:pointer" data-open="${r.id}">
+              <div class="recipe-emoji">${r.emoji}</div>
+              <div style="flex:1;min-width:0">
+                <div class="recipe-title">${esc(r.name)}</div>
+                <div class="recipe-meta" style="margin-top:6px">
+                  <span class="meta-tag">⏱ ${r.time} min</span>
+                  <span class="meta-tag" style="background:${diffBg};color:${diffColour}">${r.difficulty}</span>
+                  <span class="meta-tag">${d.label}</span>
+                </div>
+              </div>
+            </div>
+            <div class="recipe-card-body">
+              <p class="recipe-description">${esc(r.description)}</p>
+              <div>
+                <div class="recipe-section-label">Ingredients</div>
+                <ul class="recipe-list">${r.ingredients.slice(0,4).map(i=>`<li>${esc(i)}</li>`).join('')}${r.ingredients.length>4?`<li>+${r.ingredients.length-4} more…</li>`:''}</ul>
+              </div>
+              <button class="btn-view-detail" data-open="${r.id}">View Full Recipe</button>
+            </div>
+          </article>`;
+      }).join('');
+    }
+
+    // ── Open modal ────────────────────────────────
+    function openModal(id) {
+      const r = RECIPES.find(x => x.id === id);
+      if (!r) return;
+      document.getElementById('rlModalEmoji').textContent  = r.emoji;
+      document.getElementById('rlModalTitle').textContent  = r.name;
+      document.getElementById('rlModalDesc').textContent   = r.description;
+      document.getElementById('rlModalMeta').innerHTML = `
+        <span class="meta-tag">⏱ ${r.time} min</span>
+        <span class="meta-tag">${r.difficulty}</span>
+        <span class="meta-tag">${dietLabel(r).label}</span>`;
+      document.getElementById('rlModalBody').innerHTML = `
+        <div class="rl-modal-section">
+          <div class="rl-modal-section-title">Ingredients</div>
+          <ul class="rl-modal-list">${r.ingredients.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>
+        </div>
+        <div class="rl-modal-section">
+          <div class="rl-modal-section-title">Steps</div>
+          <ol class="rl-modal-steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+        </div>
+        <div class="rl-modal-section">
+          <div class="rl-modal-section-title">Substitutions</div>
+          <ul class="rl-modal-list">${r.substitutions.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>
+        </div>
+        <div class="rl-modal-tip"><strong>💡 Tip:</strong> ${esc(r.tip)}</div>`;
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // ── Events ────────────────────────────────────
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeFilter = chip.dataset.filter;
+        render();
+      });
+    });
+
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value.trim();
+      render();
+    });
+
+    grid.addEventListener('click', e => {
+      const btn = e.target.closest('[data-open]');
+      if (btn) openModal(parseInt(btn.dataset.open, 10));
+    });
+
+    document.getElementById('rlModalClose').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // Nav toggle
+    const navToggle = document.getElementById('navToggle');
+    const navLinks  = document.querySelector('.nav-links');
+    if (navToggle) navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+
+    // ── Init ──────────────────────────────────────
+    render();
+  }());
+  </script>
+</body>
+</html>

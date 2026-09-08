@@ -21,7 +21,7 @@
       <ul class="nav-links">
         <li><a href="#home">Home</a></li>
         <li><a href="#how-it-works">How It Works</a></li>
-        <li><a href="#recipes">Recipes</a></li>
+        <li><a href="recipes.html">Recipes</a></li>
       </ul>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">&#9776;</button>
     </div>
@@ -97,6 +97,10 @@
           <div class="ingredient-input-row">
             <input type="text" id="ingredientInput" class="text-input" placeholder="Enter an ingredient, e.g. tomato" autocomplete="off" />
             <button class="btn btn-add" id="addIngredientBtn">+ Add</button>
+          </div>
+          <div class="mic-row">
+            <button class="btn-mic" id="micBtn" aria-label="Start voice input">🎤 Start Listening</button>
+            <span class="mic-hint" id="micHint">Tap the mic and say your ingredients.</span>
           </div>
           <div class="tags-container" id="tagsContainer">
             <span class="tags-placeholder" id="tagsPlaceholder">No ingredients added yet. Start adding above.</span>
